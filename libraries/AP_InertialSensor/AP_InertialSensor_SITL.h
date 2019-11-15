@@ -1,9 +1,11 @@
 #pragma once
 
 #include <SITL/SITL.h>
+#include <chrono>
 
 #include "AP_InertialSensor.h"
 #include "AP_InertialSensor_Backend.h"
+#include "fstream"
 
 #define INS_SITL_INSTANCES 2
 
@@ -18,6 +20,11 @@ public:
     // detect the sensor
     static AP_InertialSensor_Backend *detect(AP_InertialSensor &imu);
 
+    std::ofstream accel_log;
+    std::ofstream gyro_log;
+    std::chrono::time_point<std::chrono::system_clock> log_time_start;
+
+
 private:
     bool init_sensor(void);
     void timer_update();
@@ -28,6 +35,7 @@ private:
     SITL::SITL *sitl;
 
     // simulated sensor rates in Hz. This matches a pixhawk1
+    // kkim103: modifying hz value
     const uint16_t gyro_sample_hz[INS_SITL_INSTANCES]  { 1000, 760 };
     const uint16_t accel_sample_hz[INS_SITL_INSTANCES] { 1000, 800 };
 

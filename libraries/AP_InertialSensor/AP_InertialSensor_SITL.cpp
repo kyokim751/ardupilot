@@ -2,6 +2,7 @@
 #include "AP_InertialSensor_SITL.h"
 #include <SITL/SITL.h>
 #include <stdio.h>
+#include <chrono>
 
 #if CONFIG_HAL_BOARD == HAL_BOARD_SITL
 
@@ -30,6 +31,10 @@ AP_InertialSensor_Backend *AP_InertialSensor_SITL::detect(AP_InertialSensor &_im
 
 bool AP_InertialSensor_SITL::init_sensor(void)
 {
+    accel_log.open("/home/vagrant/accel_log.txt");
+    gyro_log.open("/home/vagrant/gyro_log.txt");
+    log_time_start = std::chrono::system_clock::now();
+
     sitl = AP::sitl();
     if (sitl == nullptr) {
         return false;
@@ -62,10 +67,11 @@ void AP_InertialSensor_SITL::generate_accel(uint8_t instance)
 {
     // minimum noise levels are 2 bits, but averaged over many
     // samples, giving around 0.01 m/s/s
-    float accel_noise = 0.01f;
+    float accel_noise = 0.05f;
 
     if (sitl->motors_on) {
         // add extra noise when the motors are on
+	// instance should not be zero
         accel_noise += instance==0?sitl->accel_noise:sitl->accel2_noise;
     }
 
@@ -114,6 +120,10 @@ void AP_InertialSensor_SITL::generate_accel(uint8_t instance)
 
     Vector3f accel = Vector3f(xAccel, yAccel, zAccel);
 
+    auto t1 = std::chrono::system_clock::now();
+    std::chrono::duration<double> elapsed_seconds = t1 - log_time_start;
+    accel_log << elapsed_seconds.count() << " "<< xAccel << " "<< yAccel<< " " << zAccel << std::endl;
+
     _rotate_and_correct_accel(accel_instance[instance], accel);
 
     uint8_t nsamples = enable_fast_sampling(accel_instance[instance])?4:1;
@@ -152,6 +162,10 @@ void AP_InertialSensor_SITL::generate_gyro(uint8_t instance)
     }
 
     Vector3f gyro = Vector3f(p, q, r);
+    auto t1 = std::chrono::system_clock::now();
+    std::chrono::duration<double> elapsed_seconds = t1 - log_time_start;
+
+    gyro_log << elapsed_seconds.count()<< " " <<p<< " " << q<< " " << r << std::endl;
 
     // add in gyro scaling
     Vector3f scale = sitl->gyro_scale;

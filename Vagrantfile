@@ -16,6 +16,10 @@ VAGRANTFILE_API_VERSION = "2"
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.ssh.forward_x11 = true
+  config.vm.network "private_network", ip: "123.123.123.10"
+  #config.vm.network "forwarded_port", host: 9002, guest: 9002, protocol: "udp"
+  #config.vm.network "forwarded_port", host: 9003, guest: 9003, protocol: "udp"
+  #config.vm.network "forwarded_port", host: 9005, guest: 9005, protocol: "udp"
 
   # Provider-specific configuration so you can fine-tune various
   # backing providers for Vagrant. These expose provider-specific options.
@@ -26,9 +30,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       #   vb.gui = true
       #
       #   # Use VBoxManage to customize the VM. For example to change memory:
-      vb.customize ["modifyvm", :id, "--memory", "3192"]
+      vb.customize ["modifyvm", :id, "--memory", "1024"]
       vb.customize ["modifyvm", :id, "--ioapic", "on"]
-      vb.customize ["modifyvm", :id, "--cpus", "2"]
+      vb.customize ["modifyvm", :id, "--cpus", "1"]
       # Make some effort to avoid clock skew
       vb.customize ["guestproperty", "set", :id, "/VirtualBox/GuestAdd/VBoxService/--timesync-set-threshold", "5000"]
       vb.customize ["guestproperty", "set", :id, "/VirtualBox/GuestAdd/VBoxService/--timesync-set-start"]
