@@ -33,7 +33,6 @@ bool AP_InertialSensor_SITL::init_sensor(void)
 {
     accel_log.open("/home/vagrant/accel_log.txt");
     gyro_log.open("/home/vagrant/gyro_log.txt");
-    log_time_start = std::chrono::system_clock::now();
 
     sitl = AP::sitl();
     if (sitl == nullptr) {
@@ -91,7 +90,7 @@ void AP_InertialSensor_SITL::generate_accel(uint8_t instance)
         yAccel += sinf(t * 2 * M_PI * vibe_freq.y) * accel_noise;
         zAccel += sinf(t * 2 * M_PI * vibe_freq.z) * accel_noise;
     }
-    
+
     // correct for the acceleration due to the IMU position offset and angular acceleration
     // correct for the centripetal acceleration
     // only apply corrections to first accelerometer
@@ -119,14 +118,14 @@ void AP_InertialSensor_SITL::generate_accel(uint8_t instance)
     }
 
     Vector3f accel = Vector3f(xAccel, yAccel, zAccel);
-
-    auto t1 = std::chrono::system_clock::now();
-    std::chrono::duration<double> elapsed_seconds = t1 - log_time_start;
-    accel_log << elapsed_seconds.count() << " "<< xAccel << " "<< yAccel<< " " << zAccel << std::endl;
-
     _rotate_and_correct_accel(accel_instance[instance], accel);
 
     uint8_t nsamples = enable_fast_sampling(accel_instance[instance])?4:1;
+
+    // kkim103
+    uint64_t now = AP_HAL::micros64();
+    accel_log << now << " "<< accel[0] << " "<< accel[1] << " " << accel[2] << std::endl;
+
     for (uint8_t i=0; i<nsamples; i++) {
         _notify_new_accel_raw_sample(accel_instance[instance], accel);
     }
@@ -139,7 +138,7 @@ void AP_InertialSensor_SITL::generate_gyro(uint8_t instance)
 {
     // minimum gyro noise is less than 1 bit
     float gyro_noise = ToRad(0.04f);
-    
+
     if (sitl->motors_on) {
         // add extra noise when the motors are on
         gyro_noise += ToRad(sitl->gyro_noise);
@@ -162,10 +161,9 @@ void AP_InertialSensor_SITL::generate_gyro(uint8_t instance)
     }
 
     Vector3f gyro = Vector3f(p, q, r);
-    auto t1 = std::chrono::system_clock::now();
-    std::chrono::duration<double> elapsed_seconds = t1 - log_time_start;
 
-    gyro_log << elapsed_seconds.count()<< " " <<p<< " " << q<< " " << r << std::endl;
+
+
 
     // add in gyro scaling
     Vector3f scale = sitl->gyro_scale;
@@ -174,7 +172,10 @@ void AP_InertialSensor_SITL::generate_gyro(uint8_t instance)
     gyro.z *= (1 + scale.z*0.01f);
 
     _rotate_and_correct_gyro(gyro_instance[instance], gyro);
-    
+
+    uint64_t now = AP_HAL::micros64();
+    gyro_log << now << " " << gyro[0] << " " << gyro[1]<< " " << gyro[2] << std::endl;
+
     uint8_t nsamples = enable_fast_sampling(gyro_instance[instance])?8:1;
     for (uint8_t i=0; i<nsamples; i++) {
         _notify_new_gyro_raw_sample(gyro_instance[instance], gyro);
@@ -227,7 +228,7 @@ float AP_InertialSensor_SITL::gyro_drift(void)
 }
 
 
-bool AP_InertialSensor_SITL::update(void) 
+bool AP_InertialSensor_SITL::update(void)
 {
     for (uint8_t i=0; i<INS_SITL_INSTANCES; i++) {
         update_accel(accel_instance[i]);

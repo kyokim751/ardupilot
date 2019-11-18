@@ -22,8 +22,8 @@ public:
 
     std::ofstream accel_log;
     std::ofstream gyro_log;
-    std::chrono::time_point<std::chrono::system_clock> log_time_start;
-
+    // no longer needed: std::chrono::time_point<std::chrono::system_clock> log_time_start;
+    
 
 private:
     bool init_sensor(void);
